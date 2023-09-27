@@ -146,7 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Include\Encoding.h" />
-    <ClInclude Include="Include\Stream.h" />
+    <ClInclude Include="Include\Buffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Encoding.cpp" />

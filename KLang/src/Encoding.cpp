@@ -2,57 +2,57 @@
 
 namespace KLang
 {
-    bool UCS4toUTF8(ucs4& sym, Stream& stream)
+    bool UCS4toUTF8(ucs4& sym, Buffer& Buffer)
     {
-        if (!stream.CanWrite())
+        if (Buffer.Remains()==0)
             return false;
 
 		if (sym < 0x0080)
 		{
-			stream.Write(sym);
+			Buffer.Write(sym);
 		}
 		else if (sym < 0x0800)
 		{
-			stream.Write(0xC0 | (sym >> 6));
-			stream.Write(0x80 | (sym & 0x3F));
+			Buffer.Write(0xC0 | (sym >> 6));
+			Buffer.Write(0x80 | (sym & 0x3F));
 		}
 		else if (sym <= 0x0000FFFF)
 		{
-			stream.Write(0xE0 | (sym >> 12));
-			stream.Write(0x80 | ((sym >> 6) & 0x3F));
-			stream.Write(0x80 | (sym & 0x3F));
+			Buffer.Write(0xE0 | (sym >> 12));
+			Buffer.Write(0x80 | ((sym >> 6) & 0x3F));
+			Buffer.Write(0x80 | (sym & 0x3F));
 		}
 		else if (sym <= 0x001FFFFF)
 		{
-			stream.Write(0xF0 | (sym >> 18));
-			stream.Write(0x80 | ((sym >> 12) & 0x3F));
-			stream.Write(0x80 | ((sym >> 6) & 0x3F));
-			stream.Write(0x80 | (sym & 0x3F));
+			Buffer.Write(0xF0 | (sym >> 18));
+			Buffer.Write(0x80 | ((sym >> 12) & 0x3F));
+			Buffer.Write(0x80 | ((sym >> 6) & 0x3F));
+			Buffer.Write(0x80 | (sym & 0x3F));
 		}
 		else
 		{
 			// Values above 0x0010FFFF considered as non-secure
 			// https://datatracker.ietf.org/doc/html/rfc3629
-			stream.Write('\1');
+			Buffer.Write('\1');
 			return false;
 		}
 
 		return true;
     }
 
-    bool UCS2toUTF8(ucs2& sym, Stream& stream)
+    bool UCS2toUTF8(ucs2& sym, Buffer& Buffer)
     {
 		ucs4 value = sym;
-		return UCS4toUTF8(value, stream);
+		return UCS4toUTF8(value, Buffer);
     }
 
-	bool UTF8toUCS4(ucs4& sym, Stream& stream)
+	bool UTF8toUCS4(ucs4& sym, Buffer& Buffer)
 	{
-		if (!stream.CanRead())
+		if (Buffer.Remains() == 0)
 			return false;
 
-		size_t offset = stream.Offset();
-		byte c = stream.Read();
+		size_t offset = Buffer.Offset();
+		byte c = Buffer.Read();
 
 		// Full packed?
 		if (c == 0xFF)
@@ -70,7 +70,7 @@ namespace KLang
 
 		if (0xC0 == (0xE0 & c)) // 2 bytes
 		{
-			byte c2 = stream.Read();
+			byte c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
 
 			sym = ((c & 0x07) << 6)
@@ -80,9 +80,9 @@ namespace KLang
 
 		if (0xE0 == (0xF0 & c)) // 3 bytes
 		{
-			byte c2 = stream.Read();
+			byte c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
-			byte c3 = stream.Read();
+			byte c3 = Buffer.Read();
 			if (0x80 != (0xC0 & c3)) goto fail;
 
 			sym = ((c & 0x07) << 12)
@@ -93,11 +93,11 @@ namespace KLang
 
 		if (0xF0 == (0xF8 & c)) // 4 bytes
 		{
-			byte c2 = stream.Read();
+			byte c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
-			byte c3 = stream.Read();
+			byte c3 = Buffer.Read();
 			if (0x80 != (0xC0 & c3)) goto fail;
-			byte c4 = stream.Read();
+			byte c4 = Buffer.Read();
 			if (0x80 != (0xC0 & c4)) goto fail;
 
 			sym = ((c  & 0x07) << 18)
@@ -107,21 +107,21 @@ namespace KLang
 			return true;
 		}
 	fail:
-		stream.Seek(offset, Stream::T_SEEK_BGN);
+		Buffer.Seek(offset, Buffer::SeekBgn);
 		sym = 0xffff;
 		return false;
     }
 
-    bool UTF8toUCS2(ucs2& sym, Stream& stream)
+    bool UTF8toUCS2(ucs2& sym, Buffer& Buffer)
     {
-		if (!stream.CanRead())
+		if (Buffer.Remains() == 0)
 			return false;
 
-		size_t offset = stream.Offset();
+		size_t offset = Buffer.Offset();
 
 		ucs4 result;
 
-		if (UTF8toUCS4(result, stream))
+		if (UTF8toUCS4(result, Buffer))
 		{
 			if (result < 0xFFFF)
 			{
@@ -130,7 +130,7 @@ namespace KLang
 			}
 		}
 
-		stream.Seek(offset, Stream::T_SEEK_BGN);
+		Buffer.Seek(offset, Buffer::SeekBgn);
 		sym = 0xffff;
 		return false;
     }
