@@ -15,6 +15,15 @@ namespace KLang
         virtual const char* ToString();
     };
 
+    class NullPointerException : public Exception
+    {
+    public:
+        // TODO: Strings at exceptions
+        NullPointerException(const char* message);
+
+        const char* ToString() override;
+    };
+
     class OutOfRangeException : public Exception
     {
     public:

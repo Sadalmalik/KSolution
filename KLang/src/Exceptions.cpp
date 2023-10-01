@@ -13,10 +13,17 @@ namespace KLang
         return this->_message;
     }
 
-    OutOfRangeException::OutOfRangeException(const char* message) : Exception(message)
+
+    NullPointerException::NullPointerException(const char* message) : Exception(message) { }
+
+    const char* NullPointerException::ToString()
     {
-        
+        return this->_message;
     }
+
+
+
+    OutOfRangeException::OutOfRangeException(const char* message) : Exception(message) { }
 
     const char* OutOfRangeException::ToString()
     {

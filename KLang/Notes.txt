@@ -1,0 +1,175 @@
+I want to see convinient API
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Arrays
+
+Array<int> array(50);
+
+array[25] = 15;
+array[100] = 25; // Out Of Range Exception!
+
+Array<int> array2 = array; // reference to same object actualy
+
+array = nullptr; // What about nullref array?
+array[0] = 0; // Null Reference exception? I think so.
+
+if (array == nullptr) // must work
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Strings
+
+String str = u8"This is URF8 string"; // Accept literals
+
+str[3] = '?'; // Only ASCII literals??
+
+String str2 = String::Format("I want {0} style {1} !!!", u8"C#", u8"Formatting");
+
+String str3 = str2; // Same as array - reference replacement
+
+
+StringBuilder sb;
+
+sb.Append(str);
+sb.Append("\n"); // Accept literals
+sb.AppendLine(str2);
+sb.AppendFormat("{0}\n", str3);
+
+str = sb.ToString();
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Buffers and Encoding
+
+Buffer buffer(1024);
+// Buffer is a simple byte array with Read/Write/Seek API
+// Later i will add Streams API
+
+
+// Strings itself is strictly UCS4, for simplicity
+String str = u8"Some string";
+
+// Something like this - just simple methods to convert strings to plain bytes with target encoding
+Encoding::ToUTF8(str, buffer);
+Encoding::FromUTF8(str, buffer);
+
+Encoding::ToASCII(str, buffer);
+Encoding::FromASCII(str, buffer);
+
+Encoding::ToWIN1251(str, buffer);
+Encoding::FromWIN1251(str, buffer);
+
+// Alternative:
+Encoding::Encode(buffer, str, Encoding::UTF8);
+Encoding::Decode(buffer, str, Encoding::UTF8);
+
+Encoding::Encode(buffer, str, Encoding::ASCII);
+Encoding::Decode(buffer, str, Encoding::ASCII);
+
+Encoding::Encode(buffer, str, Encoding::WIN1251);
+Encoding::Decode(buffer, str, Encoding::WIN1251);
+
+// I thing last one looks better
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Console wrapper
+
+Console::Write(str);
+Console::Write(sb);
+Console::Write("Hello world");  // Accept literals
+Console::Write(u8"Hello world");
+
+String part = Console::Read(5); //  read 5 characters... Do we need it?
+String line = Console::ReadLine(); // this looks gorgeous!
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// List (Dynamic array)
+
+List<String> lines;
+List<String> lines(15); // preallocated length
+
+lines.Add("Something");      // explicide / implicide case of literal into String ?
+lines.Add("Something alse");
+
+lines.Remove("Something");  // List search and remove first appearence
+
+lines.IndexOf("Something alse");  // Search  and return index of matching element or -1
+
+if (lines.Contains("Something alse")) { ... }  // Same as lines.IndexOf() != -1
+
+lines.Clear();  // Pretty obvious!
+
+lines[0] = "yea"; // Access via []
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Set (Hash Set)
+
+Set<int> setA;
+
+setA.Add(5);
+setA.Add(12);
+setA.Add(27);
+setA.Add(32);
+
+setA.Remove(27);
+
+Set<int> setB;
+
+setB.Add(73);
+setB.Add(81);
+setB.Add(12);
+
+Set<int> setUnion = Set<int>::Union( setA, setB );
+Set<int> setCross = Set<int>::Cross( setA, setB );
+// Or...
+Set<int> setUnion = setA | setB;
+Set<int> setCross = setA & setB;
+// Hmm...
+
+
+Set<int> setX;
+
+setX.UnionWith(setA); // Good
+setX.CrossWith(setB);
+
+if (setUnion.Contains(12)) { ... }  // GOOD
+if (setCross.Contains(5)) { ... }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dict (Dictionary / Hash Map)
+
+Dict<String, String> dict;
+dict.Add("A", "X");
+dict.Add("B", "Y");
+dict.Add("C", "Z");
+dict.Remove("B");
+
+dict["A"] // Access vis [], NOT creating element if it not exists, thow exception
+
+
+// Support for readable initialization constructor
+Dict<String, String> params({
+	{"method", "GET"},
+	{"client", "MyBrowser"},
+	{"cookie", "session=BABABABABA"}
+});
+
+if (params.Contains("methos")) { ... } // Yea!
+String value;
+if (!params.TryGet("U", value)) // Value argument is reference &
+{
+	value = "No element";
+	params.Add("U", value);
+}
+

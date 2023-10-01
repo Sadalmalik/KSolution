@@ -1,6 +1,8 @@
 #pragma once
-#ifndef KLANG_HEAD_ARRAY
-#define KLANG_HEAD_ARRAY
+#ifndef KLANG_HEAD_data
+#define KLANG_HEAD_data
+
+#include <atomic>
 
 #include "Types.h"
 #include "Exceptions.h"
@@ -8,72 +10,137 @@
 namespace KLang
 {
     template<typename T>
-    class Array
+    class Array;
+
+    template<typename T>
+    class ArrayObject
     {
     private:
-        uint32_t _len;
-        T* _array;
+        std::atomic<uint32_t> _counter;
+        uint32_t _length;
+        T* _data;
 
-        inline Array() : _len(0), _array(nullptr) {};
-    public:
-        int Length();
+        ArrayObject(uint32_t length);
 
-        T& operator[] (uint32_t idx);
-        T& At(uint32_t idx);
-
-        static Array* New(uint32_t length);
-        static void Del(Array*arr);
+        friend class Array<T>;
     };
 
     template<typename T>
-    int Array<T>::Length()
+    ArrayObject<T>::ArrayObject(uint32_t length) : _counter(0), _length(length), _data((T*) (this+1))
     {
-        return this->_len;
+    }
+
+    // Actually this is Facade
+    template<typename T>
+    class Array
+    {
+    private:
+        ArrayObject<T> * _object;
+
+    public:
+        Array();
+        Array(uint32_t length);
+        Array(Array& other);
+        Array(const Array& other);
+        ~Array();
+
+        uint32_t Length();
+
+        T& operator[] (uint32_t idx);
+
+        bool operator== (Array& other);
+        bool operator== (Array<T>* other);
+    };
+
+    template<typename T>
+    Array<T>::Array()
+    {
+        _object = nullptr;
+    }
+
+    template<typename T>
+    Array<T>::Array(uint32_t length)
+    {
+        _object = (ArrayObject<T>*) new byte[sizeof(ArrayObject<T>) + length * sizeof(T)];
+
+        new (_object) ArrayObject<T>(length);
+        _object->_counter = 1;
+
+        for (uint32_t i = 0; i < length; i++)
+        {
+            new (&_object->_data[i]) T();
+        }
+    }
+
+    template<typename T>
+    Array<T>::Array(Array& other)
+    {
+        _object = other._object;
+        if (_object != nullptr)
+            _object->counter++;
+    }
+
+    template<typename T>
+    Array<T>::Array(const Array& other)
+    {
+        _object = other._object;
+        if (_object != nullptr)
+            _object->counter++;
+    }
+
+    template<typename T>
+    Array<T>::~Array()
+    {
+        if (_object == nullptr)
+            return;
+
+        _object->_counter--;
+
+        if (_object->_counter == 0)
+        {
+            for (uint32_t i = 0; i < _object->_length; i++)
+            {
+                _object->_data[i].~T();
+            }
+
+            delete[](byte*)_object;
+        }
+    }
+
+    template<typename T>
+    uint32_t Array<T>::Length()
+    {
+        if (_object == nullptr)
+            throw NullPointerException("NullPointerException: Array is null!\n");
+        return _object->_length;
     }
 
     template<typename T>
     T& Array<T>::operator[] (uint32_t idx)
     {
-        if (idx < 0 || idx > _len)
+        if (_object == nullptr)
+            throw NullPointerException("NullPointerException: Array is null!\n");
+        if (idx < 0 || idx > _object->_length)
             // TODO: String formatting
-            throw OutOfRangeException("OutOfRangeException: Array index must be in range 0 {_len} but it is {idx}");
-        return this->_array[idx];
+            throw OutOfRangeException("OutOfRangeException: Array index must be in range 0 {_length} but it is {idx}\n");
+        return _object->_data[idx];
     }
 
     template<typename T>
-    T& Array<T>::At (uint32_t idx)
+    bool Array<T>::operator== (Array& other)
     {
-        if (idx < 0 || idx > _len)
-            // TODO: String formatting
-            throw OutOfRangeException("OutOfRangeException: Array index must be in range 0 {_len} but it is {idx}");
-        return this->_array[idx];
+        return _object == other._object;
     }
 
     template<typename T>
-    Array<T>* Array<T>::New(uint32_t length)
+    bool Array<T>::operator== (Array<T> *other)
     {
-        Array* array = (Array*) new byte[sizeof(Array) + length * sizeof(T)];
-        array->_len = length;
-        array->_array = (T*)(array + 1);
-
-        for (uint32_t i = 0; i < length; i++)
-        {
-            new (&array->_array[i]) T();
-        }
-
-        return array;
-    }
-
-    template<typename T>
-    void Array<T>::Del(Array<T>* array)
-    {
-        for (uint32_t i = 0; i < array->_len; i++)
-        {
-            array->_array[i].~T();
-        }
-
-        delete[](byte*)array;
+        if (this == other)
+            return true;
+        if (other == nullptr) // Feel suspect, but at same time feel like it should be like this... It allow us to compare with nullptr
+            return _object == nullptr;
+        return _object == other->_object;
     }
 }
 
-#endif // KLANG_HEAD_ARRAY
+#endif // KLANG_HEAD_data

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <fstream>
+#include <mutex>
 
 #include "KLang/Buffer.h"
 #include "KLang/Encoding.h"
@@ -17,6 +18,8 @@ int main()
     TestArrays();
 
     printf("Hello World!\n");
+    printf("\n");
+    printf("Size of mutex: %d\n", (int) sizeof(std::mutex));
 
     return 0;
 }
@@ -53,7 +56,7 @@ void TestRawEncoding()
     fin.open("D:/test.txt", std::ios::binary | std::ios::in);
 
     fin.seekg(0, std::ios::end);
-    int length = fin.tellg();
+    int length = (int) fin.tellg();
     fin.seekg(0, std::ios::beg);
 
     Buffer otherBuffer(size);
@@ -76,27 +79,53 @@ void TestRawEncoding()
 
 void TestArrays()
 {
-    Array<int> *array = Array<int>::New(15);
+    Array<int> array(15);
 
     try
     {
-        for (int i = 0; i < array->Length(); i++)
+        for (uint32_t i = 0; i < array.Length(); i++)
         {
-            (*array)[i] = i + 5;
+            array[i] = i + 5;
         }
 
-        for (int i = 0; i < array->Length(); i++)
+        for (uint32_t i = 0; i < array.Length(); i++)
         {
-            printf("Element[ %d ] = %d\n", i, array->At(i));
-            array->At(i) = i - 5;
+            printf("Element[ %d ] = %d\n", i, array[i]);
         }
 
-        int value = array->At(-1);
+        int value = array[-1];
     }
     catch (OutOfRangeException outExc)
     {
         printf(outExc.ToString());
     }
 
-    Array<int>::Del(array);
+    Array<int> anotherArray;
+
+    try
+    {
+        printf("Element 0 = %d\n", anotherArray[0]);
+    }
+    catch (NullPointerException nullExc)
+    {
+        printf(nullExc.ToString());
+    }
+
+    anotherArray = array;
+
+    try
+    {
+        printf("Element 0 = %d\n", anotherArray[0]);
+    }
+    catch (NullPointerException nullExc)
+    {
+        printf(nullExc.ToString());
+    }
+
+    printf("Arrays equal: %s\n", array == anotherArray ? "true" : "false");
+
+    Array<int> thirdArray;
+    printf("Array is  null: %s\n", thirdArray == nullptr ? "true" : "false");
+    thirdArray = array;
+    printf("Array is  null: %s\n", thirdArray == nullptr ? "true" : "false");
 }
