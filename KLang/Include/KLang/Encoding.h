@@ -3,6 +3,7 @@
 #define KLANG_HEAD_ENCODING
 
 #include <stdint.h>
+#include "Types.h"
 #include "Buffer.h"
 
 namespace KLang
@@ -15,6 +16,12 @@ namespace KLang
 
     bool UTF8toUCS4(ucs4 & symbol, Buffer & stream);
     bool UTF8toUCS2(ucs2 & symbol, Buffer & stream);
+
+    bool UCS4toASCII(ucs4& symbol, Buffer& stream);
+    bool UCS2toASCII(ucs4& symbol, Buffer& stream);
+
+    bool ASCIItoUCS4(ucs4& symbol, Buffer& stream);
+    bool ASCIItoUCS2(ucs2& symbol, Buffer& stream);
 }
 
 #endif // !KLANG_HEAD_ENCODING

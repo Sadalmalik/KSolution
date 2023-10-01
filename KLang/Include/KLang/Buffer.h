@@ -2,13 +2,11 @@
 #ifndef KLANG_HEAD_STREAM
 #define KLANG_HEAD_STREAM
 
-#include <stdint.h>
 #include <stdio.h>
+#include "Types.h"
 
 namespace KLang
 {
-    typedef int8_t byte;
-
     class Buffer
     {
     private:
@@ -46,7 +44,9 @@ namespace KLang
         this->_begin = new byte[size];
         this->_end = &this->_begin[size];
         this->_it = this->_begin;
-        printf("Allocate %d bytes at %p\n", size, this->_begin);
+
+        for (int i = 0; i < size; i++)
+            this->_begin[i] = 0;
     }
 
     inline Buffer::Buffer(byte* begin, byte* end)
@@ -62,7 +62,6 @@ namespace KLang
     {
         if (this->_isOwner)
         {
-            printf("Free %d bytes at %p\n", this->_size, this->_begin);
             delete[] this->_begin;
         }
     }

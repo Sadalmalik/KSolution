@@ -1,4 +1,4 @@
-#include "Encoding.h"
+#include "KLang/Encoding.h"
 
 namespace KLang
 {
@@ -52,7 +52,7 @@ namespace KLang
 			return false;
 
 		size_t offset = Buffer.Offset();
-		byte c = Buffer.Read();
+		uint32_t c = Buffer.Read();
 
 		// Full packed?
 		if (c == 0xFF)
@@ -70,34 +70,34 @@ namespace KLang
 
 		if (0xC0 == (0xE0 & c)) // 2 bytes
 		{
-			byte c2 = Buffer.Read();
+			uint32_t c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
 
-			sym = ((c & 0x07) << 6)
-				| (c2 & 0x3F);
+			sym = ((c  & 0x1F) << 6)
+				|  (c2 & 0x3F);
 			return true;
 		}
 
 		if (0xE0 == (0xF0 & c)) // 3 bytes
 		{
-			byte c2 = Buffer.Read();
+			uint32_t c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
-			byte c3 = Buffer.Read();
+			uint32_t c3 = Buffer.Read();
 			if (0x80 != (0xC0 & c3)) goto fail;
 
-			sym = ((c & 0x07) << 12)
+			sym = ((c  & 0x0F) << 12)
 				| ((c2 & 0x3F) << 6)
-				| (c3 & 0x3F);
+				|  (c3 & 0x3F);
 			return true;
 		}
 
 		if (0xF0 == (0xF8 & c)) // 4 bytes
 		{
-			byte c2 = Buffer.Read();
+			uint32_t c2 = Buffer.Read();
 			if (0x80 != (0xC0 & c2)) goto fail;
-			byte c3 = Buffer.Read();
+			uint32_t c3 = Buffer.Read();
 			if (0x80 != (0xC0 & c3)) goto fail;
-			byte c4 = Buffer.Read();
+			uint32_t c4 = Buffer.Read();
 			if (0x80 != (0xC0 & c4)) goto fail;
 
 			sym = ((c  & 0x07) << 18)
@@ -134,4 +134,10 @@ namespace KLang
 		sym = 0xffff;
 		return false;
     }
+
+	bool UCS4toASCII(ucs4& symbol, Buffer& stream) { return false; }
+	bool UCS2toASCII(ucs4& symbol, Buffer& stream) { return false; }
+
+	bool ASCIItoUCS4(ucs4& symbol, Buffer& stream) { return false; }
+	bool ASCIItoUCS2(ucs2& symbol, Buffer& stream) { return false; }
 }

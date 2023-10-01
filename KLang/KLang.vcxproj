@@ -145,10 +145,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Include\Encoding.h" />
-    <ClInclude Include="Include\Buffer.h" />
+    <ClInclude Include="Include\KLang\Array.h" />
+    <ClInclude Include="Include\KLang\Encoding.h" />
+    <ClInclude Include="Include\KLang\Buffer.h" />
+    <ClInclude Include="Include\KLang\Exceptions.h" />
+    <ClInclude Include="Include\KLang\String.h" />
+    <ClInclude Include="Include\KLang\Types.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Array.cpp" />
+    <ClCompile Include="src\Exceptions.cpp" />
+    <ClCompile Include="src\String.cpp" />
     <ClCompile Include="src\Encoding.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
