@@ -13,8 +13,10 @@ namespace KLang
 
     enum class Encoding
     {
-        utf8,
-        ascii
+        None = 0,
+        utf8 = 1,
+        ascii = 1,
+        win1251 = 2
     };
 }
 

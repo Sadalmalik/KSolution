@@ -4,6 +4,7 @@ I want to see convinient API
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arrays
+// DONE
 
 Array<int> array(50);
 
@@ -64,16 +65,21 @@ Encoding::ToWIN1251(str, buffer);
 Encoding::FromWIN1251(str, buffer);
 
 // Alternative:
-Encoding::Encode(buffer, str, Encoding::UTF8);
-Encoding::Decode(buffer, str, Encoding::UTF8);
+Encoder::Encode(buffer, str, Encoding::UTF8);
+Encoder::Decode(buffer, str, Encoding::UTF8);
 
-Encoding::Encode(buffer, str, Encoding::ASCII);
-Encoding::Decode(buffer, str, Encoding::ASCII);
+Encoder::Encode(buffer, str, Encoding::ASCII);
+Encoder::Decode(buffer, str, Encoding::ASCII);
 
-Encoding::Encode(buffer, str, Encoding::WIN1251);
-Encoding::Decode(buffer, str, Encoding::WIN1251);
+Encoder::Encode(buffer, str, Encoding::WIN1251);
+Encoder::Decode(buffer, str, Encoding::WIN1251);
 
 // I thing last one looks better
+
+Array<ucs4> symbols;
+
+Encoder::Encode(buffer, symbols);
+symbols = Encoder::Decode(buffer);
 
 
 

@@ -125,7 +125,11 @@ void TestArrays()
     printf("Arrays equal: %s\n", array == anotherArray ? "true" : "false");
 
     Array<int> thirdArray;
-    printf("Array is  null: %s\n", thirdArray == nullptr ? "true" : "false");
+    printf("Array is null: %s\n", thirdArray == nullptr ? "true" : "false");
     thirdArray = array;
-    printf("Array is  null: %s\n", thirdArray == nullptr ? "true" : "false");
+    printf("Array is null: %s\n", thirdArray == nullptr ? "true" : "false");
+
+    Array<int> nullArray(nullptr);
+
+    printf("Array is null: %s\n", nullArray == nullptr ? "true" : "false");
 }

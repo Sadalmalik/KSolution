@@ -14,6 +14,7 @@ namespace KLang
     }
 
 
+
     NullPointerException::NullPointerException(const char* message) : Exception(message) { }
 
     const char* NullPointerException::ToString()
@@ -26,6 +27,15 @@ namespace KLang
     OutOfRangeException::OutOfRangeException(const char* message) : Exception(message) { }
 
     const char* OutOfRangeException::ToString()
+    {
+        return this->_message;
+    }
+
+
+
+    EncodingException::EncodingException(const char* message) : Exception(message) { }
+
+    const char* EncodingException::ToString()
     {
         return this->_message;
     }

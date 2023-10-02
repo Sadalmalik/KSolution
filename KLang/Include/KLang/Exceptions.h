@@ -32,6 +32,15 @@ namespace KLang
 
         const char* ToString() override;
     };
+
+    class EncodingException : public Exception
+    {
+    public:
+        // TODO: Strings at exceptions
+        EncodingException(const char* message);
+
+        const char* ToString() override;
+    };
 }
 
 #endif // KLANG_HEAD_EXCEPTIONS

@@ -1,4 +1,5 @@
 #include "KLang/Encoding.h"
+#include "KLang/Exceptions.h"
 
 namespace KLang
 {
@@ -140,4 +141,98 @@ namespace KLang
 
 	bool ASCIItoUCS4(ucs4& symbol, Buffer& stream) { return false; }
 	bool ASCIItoUCS2(ucs2& symbol, Buffer& stream) { return false; }
+
+	typedef bool (*ENCtoUCS) (ucs4& symbol, Buffer& stream);
+	typedef bool (*UCStoENC) (ucs4& symbol, Buffer& stream);
+
+	UCStoENC _UCStoENC[]{
+		nullptr,
+		UCS4toUTF8,
+		UCS4toASCII,
+		nullptr
+	};
+
+	ENCtoUCS _ENtoUCS[]{
+		nullptr,
+		UTF8toUCS4,
+		ASCIItoUCS4,
+		nullptr
+	};
+
+	// symbols -> buffer
+	bool Encode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
+	{
+		UCStoENC EncodeSymbol = _UCStoENC[(int)encoding];
+
+		// Stream API?
+		ucs4 symbol;
+		uint32_t idx = 0;
+		uint32_t size = symbols.Length();
+		for (idx = 0; idx < size; idx++)
+		{
+			symbol = symbols[idx];
+			if (EncodeSymbol(symbol, buffer))
+			{
+				idx++;
+				continue;
+			}
+			throw EncodingException("Unexpected symbol");
+			return false;
+		}
+
+		return true;
+	}
+
+	// buffer -> symbols
+	bool Decode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
+	{
+		UCStoENC DecodeSymbol = _ENtoUCS[(int)encoding];
+
+		ucs4 symbol;
+		uint32_t idx = 0;
+		while (buffer.Remains() > 0)
+		{
+			if (DecodeSymbol(symbol, buffer))
+			{
+				symbols[idx++] = symbol;
+				continue;
+			}
+			// Fail to parse string?
+			// Should we throw exception?
+			symbols = nullptr;
+			throw EncodingException("Unexpected symbol");
+			return false;
+		}
+
+		return true;
+	}
+
+	/*/
+	bool Encode(Buffer& buffer, Array<ucs4>& string, Encoding encoding)
+	{
+		// We need dynamic buffer?
+		return false;
+	}
+	Array<ucs4> Decode(Buffer& buffer, Encoding encoding)
+	{
+		Array<ucs4> symbols(buffer.Remains());
+
+		uint32_t idx = 0;
+		ucs4 symbol;
+		while (buffer.Remains() > 0)
+		{
+			if (UTF8toUCS4(symbol, buffer))
+			{
+				symbols[idx++] = symbol;
+				continue;
+			}
+			// Fail to parse string?
+			// Should we throw exception?
+			symbols = nullptr;
+		}
+		symbols.Resize(idx);
+
+		return symbols;
+	}
+	//*/
 }
