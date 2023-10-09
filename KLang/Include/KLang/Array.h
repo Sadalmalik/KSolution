@@ -1,8 +1,9 @@
 #pragma once
-#ifndef KLANG_HEAD_data
-#define KLANG_HEAD_data
+#ifndef KLANG_HEAD_ARRAY
+#define KLANG_HEAD_ARRAY
 
 #include <atomic>
+#include <initializer_list>
 
 #include "Types.h"
 #include "Exceptions.h"
@@ -41,9 +42,12 @@ namespace KLang
     public:
         Array();
         Array(uint32_t length);
+        Array(std::initializer_list<T> items);
         Array(const Array& other);
         Array(const Array* other);
         ~Array();
+
+        Array Clone();
 
         uint32_t Length();
         const T* RawArray();
@@ -52,11 +56,14 @@ namespace KLang
 
         T& operator[] (uint32_t idx);
 
+        void operator= (const Array& other);
         void operator= (Array& other);
         void operator= (Array* other);
 
         bool operator== (Array& other);
         bool operator== (Array* other);
+
+        Array<T> operator+ (Array<T>&other);
     };
 
     template<typename T>
@@ -76,6 +83,24 @@ namespace KLang
         for (uint32_t i = 0; i < length; i++)
         {
             new (&_object->_data[i]) T();
+        }
+    }
+
+    template<typename T>
+    Array<T>::Array(std::initializer_list<T> items)
+    {
+        uint32_t length = (uint32_t) items.size();
+        _object = (ArrayObject<T>*) new byte[sizeof(ArrayObject<T>) + length * sizeof(T)];
+
+        new (_object) ArrayObject<T>(length);
+        _object->_counter = 1;
+
+        uint32_t i = 0;
+        auto end = items.end();
+        for (auto iter = items.begin(); iter != end; iter++, i++)
+        {
+            new (&_object->_data[i]) T();
+            _object->_data[i] = *iter;
         }
     }
 
@@ -107,6 +132,16 @@ namespace KLang
     }
 
     template<typename T>
+    Array<T> Array<T>::Clone()
+    {
+        uint32_t length = Length();
+        Array<T> newArray(length);
+        for (uint32_t i = 0; i < length; i++)
+            newArray[i] = this[i];
+        return newArray;
+    }
+
+    template<typename T>
     void Array<T>::ClearArrayObject()
     {
         if (_object == nullptr)
@@ -123,6 +158,8 @@ namespace KLang
 
             delete[](byte*)_object;
         }
+
+        _object = nullptr;
     }
 
     template<typename T>
@@ -149,14 +186,14 @@ namespace KLang
         if (minLength > newLength)
             minLength = newLength;
         for (uint32_t i = 0; i < minLength; i++)
-            newArray[i] = this[i];
+            newArray[i] = (*this)[i];
         return newArray;
     }
 
     template<typename T>
     void Array<T>::Resize(uint32_t newLength)
     {
-        this = Resized(newLength);
+        *this = Resized(newLength);
     }
 
     template<typename T>
@@ -168,6 +205,15 @@ namespace KLang
             // TODO: String formatting
             throw OutOfRangeException("OutOfRangeException: Array index must be in range 0 {_length} but it is {idx}\n");
         return _object->_data[idx];
+    }
+
+    template<typename T>
+    void Array<T>::operator= (const Array<T>& other)
+    {
+        ClearArrayObject();
+        _object = other._object;
+        if (_object != nullptr)
+            _object->_counter++;
     }
 
     template<typename T>
@@ -203,6 +249,22 @@ namespace KLang
             return _object == nullptr;
         return _object == other->_object;
     }
+
+    template<typename T>
+    Array<T> operator+ (Array<T>& other)
+    {
+        Array<T>&a = *this;
+        Array<T>&b = other;
+        uint32_t aLen = a.Length();
+        uint32_t bLen = b.Length();
+        uint32_t size = aLen + bLen;
+        Array<T> sum(size);
+
+        uint32_t i = 0;
+        for (; i < aLen; i++) sum[i] = a[i];
+        for (; i < size; i++) sum[i] = b[i - aLen];
+        return sum;
+    }
 }
 
-#endif // KLANG_HEAD_data
+#endif // KLANG_HEAD_ARRAY

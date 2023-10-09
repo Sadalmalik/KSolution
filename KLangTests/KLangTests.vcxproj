@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -134,11 +134,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KLangTests.cpp" />
+    <ClCompile Include="TestArrays.cpp" />
+    <ClCompile Include="TestEncodings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KLang\KLang.vcxproj">
       <Project>{09cb1eb3-3158-4487-a10b-1a1722ddfde7}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="KLangTests.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

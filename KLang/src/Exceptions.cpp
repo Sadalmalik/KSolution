@@ -15,6 +15,18 @@ namespace KLang
 
 
 
+    NotImplementedException::NotImplementedException(const char* message)
+    {
+        this->_message = message;
+    }
+
+    const char* NotImplementedException::ToString()
+    {
+        return this->_message;
+    }
+
+
+
     NullPointerException::NullPointerException(const char* message) : Exception(message) { }
 
     const char* NullPointerException::ToString()

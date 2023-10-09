@@ -1,6 +1,6 @@
 #pragma once
-#ifndef KLANG_HEAD_STREAM
-#define KLANG_HEAD_STREAM
+#ifndef KLANG_HEAD_BUFFER
+#define KLANG_HEAD_BUFFER
 
 #include <stdio.h>
 #include "Types.h"
@@ -10,25 +10,29 @@ namespace KLang
     class Buffer
     {
     private:
+        byte* _it;
         byte* _begin;
         byte* _end;
-        byte* _it;
-        bool _isOwner;
-        size_t _size;
+
+        uint32_t _size;
+        Array<byte> _data;
     public:
-        inline Buffer(size_t size);
+        inline Buffer(uint32_t size);
         inline Buffer(byte* begin, byte* end);
         inline ~Buffer();
+
+        void Resize(uint32_t newLength);
 
         inline bool IsEOF();
 
         inline byte* Begin();
         inline byte* End();
 
-        inline size_t Offset();
-        inline size_t Remains();
+        inline uint32_t Length();
+        inline uint32_t Offset();
+        inline uint32_t Remains();
 
-        inline void Seek(size_t, int point = SeekCur);
+        inline void Seek(uint32_t, int point = SeekCur);
         inline void Write(byte b);
         inline byte Read();
 
@@ -37,42 +41,49 @@ namespace KLang
         static const int SeekEnd = 2;
     };
 
-    inline Buffer::Buffer(size_t size)
+    inline Buffer::Buffer(uint32_t size) : _data(size)
     {
-        this->_isOwner = true;
-        this->_size = size;
-        this->_begin = new byte[size];
-        this->_end = &this->_begin[size];
+        _size = size;
+
+        this->_begin = &_data[0];
+        this->_end = &_data[size-1];
         this->_it = this->_begin;
 
         for (int i = 0; i < size; i++)
             this->_begin[i] = 0;
     }
 
-    inline Buffer::Buffer(byte* begin, byte* end)
+    inline Buffer::Buffer(byte* begin, byte* end) : _data(nullptr)
     {
-        this->_isOwner = false;
         this->_begin = begin;
         this->_end = end;
         this->_it = begin;
+
         this->_size = this->_end - this->_begin;
     }
 
     inline Buffer::~Buffer()
     {
-        if (this->_isOwner)
-        {
-            delete[] this->_begin;
-        }
+        _data = nullptr;
     }
 
-    inline byte*  Buffer::Begin()    { return this->_begin; }
-    inline byte*  Buffer::End()      { return this->_end; }
-    inline bool   Buffer::IsEOF()    { return this->_it == this->_end; }
-    inline size_t Buffer::Offset()   { return (size_t)(this->_it - this->_begin); }
-    inline size_t Buffer::Remains()  { return (size_t)(this->_end - this->_it); }
+    inline void   Buffer::Resize(uint32_t newLength)
+    {
+        _data.Resize(newLength);
+        _size = newLength;
+    }
 
-    inline void Buffer::Seek(size_t offset, int point)
+    inline byte*  Buffer::Begin()    { return _begin; }
+    inline byte*  Buffer::End()      { return _end; }
+    inline bool   Buffer::IsEOF()    { return _it == _end; }
+
+    inline uint32_t Buffer::Length()   { return _data.Length(); }
+    inline uint32_t Buffer::Offset()   { return (uint32_t)(this->_it - this->_begin); }
+    inline uint32_t Buffer::Remains()  { return (uint32_t)(this->_end - this->_it); }
+
+
+
+    inline void Buffer::Seek(uint32_t offset, int point)
     {
         switch (point)
         {
@@ -99,4 +110,4 @@ namespace KLang
     }
 }
 
-#endif // !KLANG_HEAD_STREAM
+#endif // !KLANG_HEAD_BUFFER

@@ -1,168 +1,29 @@
+#include "KLang/Array.h"
 #include "KLang/Encoding.h"
 #include "KLang/Exceptions.h"
 
 namespace KLang
 {
-    bool UCS4toUTF8(ucs4& sym, Buffer& Buffer)
-    {
-        if (Buffer.Remains()==0)
-            return false;
-
-		if (sym < 0x0080)
-		{
-			Buffer.Write(sym);
-		}
-		else if (sym < 0x0800)
-		{
-			Buffer.Write(0xC0 | (sym >> 6));
-			Buffer.Write(0x80 | (sym & 0x3F));
-		}
-		else if (sym <= 0x0000FFFF)
-		{
-			Buffer.Write(0xE0 | (sym >> 12));
-			Buffer.Write(0x80 | ((sym >> 6) & 0x3F));
-			Buffer.Write(0x80 | (sym & 0x3F));
-		}
-		else if (sym <= 0x001FFFFF)
-		{
-			Buffer.Write(0xF0 | (sym >> 18));
-			Buffer.Write(0x80 | ((sym >> 12) & 0x3F));
-			Buffer.Write(0x80 | ((sym >> 6) & 0x3F));
-			Buffer.Write(0x80 | (sym & 0x3F));
-		}
-		else
-		{
-			// Values above 0x0010FFFF considered as non-secure
-			// https://datatracker.ietf.org/doc/html/rfc3629
-			Buffer.Write('\1');
-			return false;
-		}
-
-		return true;
-    }
-
-    bool UCS2toUTF8(ucs2& sym, Buffer& Buffer)
-    {
-		ucs4 value = sym;
-		return UCS4toUTF8(value, Buffer);
-    }
-
-	bool UTF8toUCS4(ucs4& sym, Buffer& Buffer)
-	{
-		if (Buffer.Remains() == 0)
-			return false;
-
-		size_t offset = Buffer.Offset();
-		uint32_t c = Buffer.Read();
-
-		// Full packed?
-		if (c == 0xFF)
-			goto fail;
-
-		// Not start of symbol
-		if (0x80 == (0xC0 & c))
-			goto fail;
-
-		if (c < 0x80) // 1 byte
-		{
-			sym = c;
-			return true;
-		}
-
-		if (0xC0 == (0xE0 & c)) // 2 bytes
-		{
-			uint32_t c2 = Buffer.Read();
-			if (0x80 != (0xC0 & c2)) goto fail;
-
-			sym = ((c  & 0x1F) << 6)
-				|  (c2 & 0x3F);
-			return true;
-		}
-
-		if (0xE0 == (0xF0 & c)) // 3 bytes
-		{
-			uint32_t c2 = Buffer.Read();
-			if (0x80 != (0xC0 & c2)) goto fail;
-			uint32_t c3 = Buffer.Read();
-			if (0x80 != (0xC0 & c3)) goto fail;
-
-			sym = ((c  & 0x0F) << 12)
-				| ((c2 & 0x3F) << 6)
-				|  (c3 & 0x3F);
-			return true;
-		}
-
-		if (0xF0 == (0xF8 & c)) // 4 bytes
-		{
-			uint32_t c2 = Buffer.Read();
-			if (0x80 != (0xC0 & c2)) goto fail;
-			uint32_t c3 = Buffer.Read();
-			if (0x80 != (0xC0 & c3)) goto fail;
-			uint32_t c4 = Buffer.Read();
-			if (0x80 != (0xC0 & c4)) goto fail;
-
-			sym = ((c  & 0x07) << 18)
-				| ((c2 & 0x3F) << 12)
-				| ((c3 & 0x3F) << 6)
-				|  (c4 & 0x3F);
-			return true;
-		}
-	fail:
-		Buffer.Seek(offset, Buffer::SeekBgn);
-		sym = 0xffff;
-		return false;
-    }
-
-    bool UTF8toUCS2(ucs2& sym, Buffer& Buffer)
-    {
-		if (Buffer.Remains() == 0)
-			return false;
-
-		size_t offset = Buffer.Offset();
-
-		ucs4 result;
-
-		if (UTF8toUCS4(result, Buffer))
-		{
-			if (result < 0xFFFF)
-			{
-				sym = result;
-				return true;
-			}
-		}
-
-		Buffer.Seek(offset, Buffer::SeekBgn);
-		sym = 0xffff;
-		return false;
-    }
-
-	bool UCS4toASCII(ucs4& symbol, Buffer& stream) { return false; }
-	bool UCS2toASCII(ucs4& symbol, Buffer& stream) { return false; }
-
-	bool ASCIItoUCS4(ucs4& symbol, Buffer& stream) { return false; }
-	bool ASCIItoUCS2(ucs2& symbol, Buffer& stream) { return false; }
-
 	typedef bool (*ENCtoUCS) (ucs4& symbol, Buffer& stream);
 	typedef bool (*UCStoENC) (ucs4& symbol, Buffer& stream);
 
-	UCStoENC _UCStoENC[]{
-		nullptr,
-		UCS4toUTF8,
-		UCS4toASCII,
-		nullptr
+	struct EncoderPair
+	{
+		ENCtoUCS encoding_to_ucs;
+		UCStoENC ucs_to_encoding;
 	};
 
-	ENCtoUCS _ENtoUCS[]{
-		nullptr,
-		UTF8toUCS4,
-		ASCIItoUCS4,
-		nullptr
-	};
+	Array<EncoderPair> encoders({
+		{nullptr, nullptr},
+		{UTF8toUCS4, UCS4toUTF8},
+		{ASCIItoUCS4, UCS4toASCII},
+		{nullptr, nullptr}
+	}); /// Hmmm 
 
 	// symbols -> buffer
-	bool Encode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
+	int Encode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
 	{
-		UCStoENC EncodeSymbol = _UCStoENC[(int)encoding];
+		UCStoENC encode = encoders[(int)encoding].ucs_to_encoding;
 
 		// Stream API?
 		ucs4 symbol;
@@ -171,68 +32,57 @@ namespace KLang
 		for (idx = 0; idx < size; idx++)
 		{
 			symbol = symbols[idx];
-			if (EncodeSymbol(symbol, buffer))
-			{
-				idx++;
-				continue;
-			}
-			throw EncodingException("Unexpected symbol");
-			return false;
+			if (!encode(symbol, buffer))
+				throw EncodingException("Unexpected symbol {0}");
 		}
 
-		return true;
+		return idx;
 	}
 
 	// buffer -> symbols
-	bool Decode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
+	int Decode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding)
 	{
-		UCStoENC DecodeSymbol = _ENtoUCS[(int)encoding];
+		ENCtoUCS decode = encoders[(int)encoding].encoding_to_ucs;
 
 		ucs4 symbol;
 		uint32_t idx = 0;
 		while (buffer.Remains() > 0)
 		{
-			if (DecodeSymbol(symbol, buffer))
-			{
-				symbols[idx++] = symbol;
-				continue;
-			}
-			// Fail to parse string?
-			// Should we throw exception?
-			symbols = nullptr;
-			throw EncodingException("Unexpected symbol");
-			return false;
+			if (!decode(symbol, buffer))
+				throw EncodingException("Unexpected symbol {0}");
+			symbols[idx++] = symbol;
 		}
 
-		return true;
+		return idx;
 	}
 
-	/*/
-	bool Encode(Buffer& buffer, Array<ucs4>& string, Encoding encoding)
+	// symbols -> buffer
+	Buffer Encode(Array<ucs4>& symbols, Encoding encoding)
 	{
-		// We need dynamic buffer?
-		return false;
+		Buffer buffer(4 * symbols.Length());
+
+		Encode(buffer, symbols, encoding);
+
+		// Well, i thing i need rewrite buffer based on Arrays
+		size_t length = buffer.Offset();
+		Buffer resized(length);
+		buffer.Seek(0, Buffer::SeekBgn);
+		while (buffer.Offset() < length)
+		{
+			resized.Write(buffer.Read());
+		}
+
+		return resized;
 	}
+
+	// buffer -> symbols
 	Array<ucs4> Decode(Buffer& buffer, Encoding encoding)
 	{
 		Array<ucs4> symbols(buffer.Remains());
 
-		uint32_t idx = 0;
-		ucs4 symbol;
-		while (buffer.Remains() > 0)
-		{
-			if (UTF8toUCS4(symbol, buffer))
-			{
-				symbols[idx++] = symbol;
-				continue;
-			}
-			// Fail to parse string?
-			// Should we throw exception?
-			symbols = nullptr;
-		}
-		symbols.Resize(idx);
+		int readed = Decode(buffer, symbols, encoding);
 
-		return symbols;
+		symbols.Resize(readed);
+		return readed;
 	}
-	//*/
 }

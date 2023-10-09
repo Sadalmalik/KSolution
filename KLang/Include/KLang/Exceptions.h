@@ -15,6 +15,18 @@ namespace KLang
         virtual const char* ToString();
     };
 
+
+    class NotImplementedException
+    {
+    protected:
+        const char* _message;
+    public:
+        // TODO: Strings at exceptions
+        NotImplementedException(const char* message);
+
+        virtual const char* ToString();
+    };
+
     class NullPointerException : public Exception
     {
     public:

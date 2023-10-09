@@ -20,6 +20,15 @@ if (array == nullptr) // must work
 
 
 
+// Slices ???
+
+Slice<int> slice(array, 0, 30, 3); // Slice through first 30 elements of array with step 3
+
+slice[5] == array[15]  ->  true
+slice[11]  ->   out of bounds? loops over?
+slice[-1]  ->   last element, like in python?
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Strings
 
@@ -78,8 +87,16 @@ Encoder::Decode(buffer, str, Encoding::WIN1251);
 
 Array<ucs4> symbols;
 
-Encoder::Encode(buffer, symbols);
-symbols = Encoder::Decode(buffer);
+// Ok, let it be with two variants:
+// #1 - preallocated buffers and strings:
+
+	Encoder::Encode(buffer, str, encoding);
+	Encoder::Decode(buffer, str, encoding);
+
+// Auto allocated buffer and strings:
+
+	buffer = Encoder::Encode(symbols, encoding);
+	symbols = Encoder::Decode(buffer, encoding);
 
 
 

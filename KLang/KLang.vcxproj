@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -146,17 +146,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Include\KLang\Array.h" />
+    <ClInclude Include="Include\KLang\Console.h" />
     <ClInclude Include="Include\KLang\Encoding.h" />
     <ClInclude Include="Include\KLang\Buffer.h" />
     <ClInclude Include="Include\KLang\Exceptions.h" />
+    <ClInclude Include="Include\KLang\List.h" />
     <ClInclude Include="Include\KLang\String.h" />
+    <ClInclude Include="Include\KLang\StringBuilder.h" />
     <ClInclude Include="Include\KLang\Types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Array.cpp" />
+    <ClCompile Include="src\Console.cpp" />
+    <ClCompile Include="src\Encoding_ASCII.cpp" />
+    <ClCompile Include="src\Encoding_UTF8.cpp" />
     <ClCompile Include="src\Exceptions.cpp" />
     <ClCompile Include="src\String.cpp" />
     <ClCompile Include="src\Encoding.cpp" />
+    <ClCompile Include="src\StringBuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Notes.txt" />

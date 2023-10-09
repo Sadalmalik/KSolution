@@ -3,14 +3,20 @@
 #define KLANG_HEAD_ENCODING
 
 #include <stdint.h>
+
 #include "Types.h"
 #include "Buffer.h"
-#include "String.h"
+#include "Array.h"
 
 namespace KLang
 {
-    typedef uint16_t ucs2;
-    typedef uint32_t ucs4;
+    enum class Encoding
+    {
+        None = 0,
+        utf8 = 1,
+        ascii = 2,
+        win1251 = 3
+    };
 
     bool UCS4toUTF8(ucs4 & symbol, Buffer & stream);
     bool UCS2toUTF8(ucs2 & symbol, Buffer & stream);
@@ -26,13 +32,17 @@ namespace KLang
 
     namespace Encoder
     {
+        // #1 - preallocated buffers and strings:
         // symbols -> buffer
-        bool Encode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding);
+        int Encode(const Buffer& buffer, const Array<ucs4>& symbols, Encoding encoding = Encoding::utf8);
         // buffer -> symbols
-        bool Decode(Buffer& buffer, Array<ucs4>& symbols, Encoding encoding);
+        int Decode(const Buffer& buffer, const Array<ucs4>& symbols, Encoding encoding = Encoding::utf8);
 
-        Buffer Encode(Array<ucs4>&symbols, Encoding encoding);
-        Array<ucs4> Decode(Buffer& buffer, Encoding encoding);
+        // Auto allocated buffer and strings:
+        // symbols -> buffer
+        Buffer Encode(const Array<ucs4>&symbols, Encoding encoding = Encoding::utf8);
+        // buffer -> symbols
+        Array<ucs4> Decode(const Buffer& buffer, Encoding encoding = Encoding::utf8);
     }
 }
 
