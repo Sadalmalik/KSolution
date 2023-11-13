@@ -150,7 +150,10 @@
     <ClInclude Include="Include\KLang\Encoding.h" />
     <ClInclude Include="Include\KLang\Buffer.h" />
     <ClInclude Include="Include\KLang\Exceptions.h" />
+    <ClInclude Include="Include\KLang\FileStream.h" />
+    <ClInclude Include="Include\KLang\Layout.h" />
     <ClInclude Include="Include\KLang\List.h" />
+    <ClInclude Include="Include\KLang\Stream.h" />
     <ClInclude Include="Include\KLang\String.h" />
     <ClInclude Include="Include\KLang\StringBuilder.h" />
     <ClInclude Include="Include\KLang\Types.h" />
@@ -160,6 +163,7 @@
     <ClCompile Include="src\Encoding_ASCII.cpp" />
     <ClCompile Include="src\Encoding_UTF8.cpp" />
     <ClCompile Include="src\Exceptions.cpp" />
+    <ClCompile Include="src\FileStream.cpp" />
     <ClCompile Include="src\String.cpp" />
     <ClCompile Include="src\Encoding.cpp" />
     <ClCompile Include="src\StringBuilder.cpp" />

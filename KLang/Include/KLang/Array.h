@@ -38,7 +38,8 @@ namespace KLang
     private:
         ArrayObject<T> * _object;
 
-        void ClearArrayObject();
+        inline void ClearArrayObject();
+        inline void NullCheck();
     public:
         Array();
         Array(uint32_t length);
@@ -48,6 +49,7 @@ namespace KLang
         ~Array();
 
         Array Clone();
+        void Clear();
 
         uint32_t Length();
         const T* RawArray();
@@ -56,15 +58,22 @@ namespace KLang
 
         T& operator[] (uint32_t idx);
 
-        void operator= (const Array& other);
         void operator= (Array& other);
-        void operator= (Array* other);
+        void operator= (const Array& other);
+        void operator= (const Array* other);
 
-        bool operator== (Array& other);
-        bool operator== (Array* other);
+        bool operator== (const Array& other);
+        bool operator== (const Array* other);
 
         Array<T> operator+ (Array<T>&other);
     };
+
+    template<typename T>
+    inline void Array<T>::NullCheck()
+    {
+        if (_object == nullptr)
+            throw NullPointerException("NullPointerException: Array is null!\n");
+    }
 
     template<typename T>
     Array<T>::Array()
@@ -142,6 +151,15 @@ namespace KLang
     }
 
     template<typename T>
+    void Array<T>::Clear()
+    {
+        for (uint32_t i = 0; i < _object->_length; i++)
+        {
+            _object->_data[i].~T();
+        }
+    }
+
+    template<typename T>
     void Array<T>::ClearArrayObject()
     {
         if (_object == nullptr)
@@ -151,11 +169,7 @@ namespace KLang
 
         if (_object->_counter == 0)
         {
-            for (uint32_t i = 0; i < _object->_length; i++)
-            {
-                _object->_data[i].~T();
-            }
-
+            Clear();
             delete[](byte*)_object;
         }
 
@@ -165,22 +179,21 @@ namespace KLang
     template<typename T>
     uint32_t Array<T>::Length()
     {
-        if (_object == nullptr)
-            throw NullPointerException("NullPointerException: Array is null!\n");
+        NullCheck();
         return _object->_length;
     }
 
     template<typename T>
     const T* Array<T>::RawArray()
     {
-        if (_object == nullptr)
-            throw NullPointerException("NullPointerException: Array is null!\n");
+        NullCheck();
         return _object->_data;
     }
 
     template<typename T>
     Array<T> Array<T>::Resized(uint32_t newLength)
     {
+        NullCheck();
         Array<T> newArray(newLength);
         uint32_t minLength = Length();
         if (minLength > newLength)
@@ -193,14 +206,14 @@ namespace KLang
     template<typename T>
     void Array<T>::Resize(uint32_t newLength)
     {
+        NullCheck();
         *this = Resized(newLength);
     }
 
     template<typename T>
     T& Array<T>::operator[] (uint32_t idx)
     {
-        if (_object == nullptr)
-            throw NullPointerException("NullPointerException: Array is null!\n");
+        NullCheck();
         if (idx < 0 || idx > _object->_length)
             // TODO: String formatting
             throw OutOfRangeException("OutOfRangeException: Array index must be in range 0 {_length} but it is {idx}\n");
@@ -226,7 +239,7 @@ namespace KLang
     }
 
     template<typename T>
-    void Array<T>::operator= (Array<T>* other)
+    void Array<T>::operator= (const Array<T>* other)
     {
         ClearArrayObject();
         _object = other==nullptr ? nullptr : other._object;
@@ -235,13 +248,13 @@ namespace KLang
     }
 
     template<typename T>
-    bool Array<T>::operator== (Array<T>& other)
+    bool Array<T>::operator== (const Array<T>& other)
     {
         return _object == other._object;
     }
 
     template<typename T>
-    bool Array<T>::operator== (Array<T> *other)
+    bool Array<T>::operator== (const Array<T> *other)
     {
         if (this == other)
             return true;

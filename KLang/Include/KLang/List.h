@@ -7,16 +7,26 @@
 namespace KLang
 {
     template<typename T>
+    class ListObject
+    {
+    private:
+        std::atomic<uint32_t> _counter;
+        uint32_t _offset;
+        Array<T> _data;
+    };
+
+    template<typename T>
     class List
     {
     private:
-        uint32_t _offset;
-        Array<T> _data;
+        ListObject<T>* _object;
+
     public:
         List();
         List(uint32_t initialSize);
         List(std::initializer_list<T> items);
         List(List<T>& other);
+        List(const List<T>& other);
         ~List();
 
         uint32_t Length();
@@ -34,50 +44,89 @@ namespace KLang
     };
 
     template<typename T>
-    List<T>::List() : _offset(0), _data(32) { }
-
-    template<typename T>
-    List<T>::List(uint32_t initialSize) : _offset(0),  _data(initialSize) { }
-
-    template<typename T>
-    List<T>::List(std::initializer_list<T> items) : _offset(0),  _data(items.size())
+    List<T>::List()
     {
-        int length = _data.Length();
-        for (int i = 0; i < length; i++)
+        _object = new ListObject<T>();
+        _object->_counter = 1;
+        _object->_offset = 0;
+        _object->_data = Array<T>(32);
+    }
+
+    template<typename T>
+    List<T>::List(uint32_t initialSize)
+    {
+        _object = new ListObject<T>();
+        _object->_counter = 1;
+        _object->_offset = 0;
+        _object->_data = Array<T>(initialSize);
+    }
+
+    template<typename T>
+    List<T>::List(std::initializer_list<T> items)
+    {
+        uint32_t size = items.size();
+
+        _object = new ListObject<T>();
+        _object->_counter = 1;
+        _object->_offset = 0;
+        _object->_data = Array<T>(size);
+
+        for (int i = 0; i < size; i++)
             _data[i] = items[i];
-        _offset = length;
+        _offset = size;
     }
 
     template<typename T>
     List<T>::List(List<T>& other) : _offset(0)
     {
-        _data = other._data.Clone();
+        _object = new ListObject<T>();
+        _object->_counter = 1;
+        _object->_offset = 0;
+        _object->_data = other._data.Clone();
+    }
+
+    template<typename T>
+    List<T>::List(const List<T>& other) : _offset(0)
+    {
+        _object = new ListObject<T>();
+        _object->_counter = 1;
+        _object->_offset = 0;
+        _object->_data = other._data.Clone();
     }
 
     template<typename T>
     List<T>::~List()
     {
-        Clear();
+        if (_object == nullptr)
+            return;
+        _object->_data.Clear();
     }
 
     template<typename T>
     uint32_t List<T>::Length()
     {
-        return _offset;
+        if (_object == nullptr)
+            throw NullPointerException();
+        return _object->_offset;
     }
 
     template<typename T>
     T& List<T>::operator[] (uint32_t idx)
     {
-        return _data[idx];
+        if (_object == nullptr)
+            throw NullPointerException();
+        return _object->_data[idx];
     }
 
     template<typename T>
     uint32_t List<T>::IndexOf(T& item)
     {
+        if (_object == nullptr)
+            throw NullPointerException();
+        Array<T> temp = _object->_data;
         for (int i = 0; i < _offset; i++)
         {
-            if (_data[i] == item)
+            if (temp[i] == item)
                 return i;
         }
         return -1;
@@ -86,23 +135,30 @@ namespace KLang
     template<typename T>
     void List<T>::Add(T& item)
     {
-        _data[_offset] = item;
-        if (_offset >= _data.Length())
-            _data.Resize(_data.Length() * 2);
+        if (_object == nullptr)
+            throw NullPointerException();
+        _object->_data[_offset] = item;
+        uint32_t length = _object->_data.Length();
+        if (_object->_offset >= length)
+            _object->_data.Resize(length * 2);
     }
 
     template<typename T>
     bool List<T>::Remove(T& item)
     {
+        if (_object == nullptr)
+            throw NullPointerException();
+
         int i = IndexOf(item);
         if (i < 0) return false;
 
+        Array<T> temp = _object->_data;
         for (; i < _offset - 2; i++)
-            _data[i] = _data[i + 1];
+            temp[i] = temp[i + 1];
         _offset--;
 
         // Should we do it? I thing so...
-        _data[_offset].~T();
+        temp[_offset].~T();
 
         return true;
     }
@@ -116,31 +172,32 @@ namespace KLang
     template<typename T>
     void List<T>::Clear()
     {
+        if (_object == nullptr)
+            throw NullPointerException();
+        Array<T> temp = _object->_data;
         for (uint32_t i = 0; i < _offset; i++)
-            _data[i].~T();
-        _offset = 0;
+            temp[i].~T();
+        _offset->_offset = 0;
     }
 
     template<typename T>
     T& List<T>::First()
     {
-        if (_offset == 0)
-        {
-            // No data here!
+        if (_object == nullptr)
+            throw NullPointerException();
+        if (_object->_offset == 0)
             throw OutOfRangeException("List is empty!");
-        }
-        return _data[0];
+        return _object->_data[0];
     }
 
     template<typename T>
     T& List<T>::Last()
     {
-        if (_offset == 0)
-        {
-            // No data here!
+        if (_object == nullptr)
+            throw NullPointerException();
+        if (_object->_offset == 0)
             throw OutOfRangeException("List is empty!");
-        }
-        return _data[_offset-1];
+        return _object->_data[_offset-1];
     }
 }
 

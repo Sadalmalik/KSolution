@@ -81,8 +81,6 @@ namespace KLang
     inline uint32_t Buffer::Offset()   { return (uint32_t)(this->_it - this->_begin); }
     inline uint32_t Buffer::Remains()  { return (uint32_t)(this->_end - this->_it); }
 
-
-
     inline void Buffer::Seek(uint32_t offset, int point)
     {
         switch (point)

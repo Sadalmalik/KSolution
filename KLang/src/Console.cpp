@@ -53,7 +53,7 @@ namespace KLang
 
 
     //void Console::Write(const char& text, Encoding encoding) { }
-    void Console::Write(Array<byte>& line) { }
+    //void Console::Write(Array<byte>& line) { }
     Array<byte> Console::ReadBytes(uint32_t bytes) { }
     static byte ReadByte() { }
 }
